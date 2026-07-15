@@ -238,6 +238,27 @@
     font-weight:700; font-size:14px;
   }
   .participant-chip .pname-text{color:var(--name-brown);}
+  .chip-left{display:flex; align-items:center; gap:10px;}
+  .avatar-btn{
+    font-size:19px; background:var(--turf-mid); border:none; border-radius:50%;
+    width:36px; height:36px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:transform .15s ease;
+  }
+  .avatar-btn:hover{transform:scale(1.08);}
+  .avatar-sm{
+    font-size:15px; width:24px; height:24px; border-radius:50%; background:var(--turf-mid);
+    display:inline-flex; align-items:center; justify-content:center; margin-right:8px; flex-shrink:0;
+  }
+  .emoji-picker{
+    display:flex; flex-wrap:wrap; gap:6px;
+    padding:4px 4px 16px; border-bottom:1px dashed rgba(18,36,29,0.15);
+    max-height:170px; overflow-y:auto;
+  }
+  .emoji-opt{
+    font-size:17px; background:#fff; border:2px solid rgba(18,36,29,0.1);
+    border-radius:8px; width:34px; height:34px; cursor:pointer;
+  }
+  .emoji-opt:hover{border-color:var(--turf-mid);}
   .participant-chip:last-child{border-bottom:none;}
   .rm-chip{background:none;border:none;color:rgba(18,36,29,0.35);cursor:pointer;font-size:13px;font-family:var(--font-mono);}
   .rm-chip:hover{color:var(--flag-red);}
@@ -314,11 +335,27 @@
 <script>
 let participants = [];
 let jornadas = [];
+let editingEmojiFor = null;
 
 // PEGA AQUÍ la URL de tu Apps Script (acaba en /exec)
 const API_URL = "https://script.google.com/macros/s/AKfycbwHfYjzokAM3Fo8dkdb-yCGXTsevvbzqTtWC8IiQF9e0gbf3CxiunVGOpYDCHLbqc3d/exec";
 
-const DEFAULT_PARTICIPANTS = ["Anna","Alba","Albert","Modesto","Lena","Sergi"];
+const DEFAULT_PARTICIPANTS = [
+  {name:"Anna", emoji:"🐱"}, {name:"Alba", emoji:"🦊"}, {name:"Albert", emoji:"🐻"},
+  {name:"Modesto", emoji:"🦁"}, {name:"Lena", emoji:"🐰"}, {name:"Sergi", emoji:"🐼"}
+];
+
+const EMOJI_PALETTE = [
+  "🐱","🦊","🐻","🦁","🐰","🐼","🐨","🐯","🦄","🐸","🐵","🦉","🐺","🐷","🐔","🐙","🦖","🐬",
+  "🐶","🐹","🐭","🐮","🐗","🐴","🐗","🐢","🦋","🐝","🦔","🦥","🦦","🦡","🦫","🦩","🦜","🐳",
+  "😎","🤓","🥳","😜","🤠","👽","🤡","🧙","🧑‍🚀","🥷","🧑‍🎤","🦸",
+  "⭐","🔥","🍀","🏆","⛳","🎯","🎉","💥","⚡","🌈","🍕","🍩","🍉","🍒","🎈","🚀","🎸","🏅"
+];
+
+function getEmoji(name){
+  const p = participants.find(x => x.name === name);
+  return p ? p.emoji : '⛳';
+}
 
 async function apiGet(){
   const res = await fetch(API_URL);
@@ -375,12 +412,12 @@ function rankJornada(j){
 
 function computeStandings(){
   const stats = {};
-  participants.forEach(p => stats[p] = {name:p, points:0, played:0, strokesSum:0, best:null});
+  participants.forEach(p => stats[p.name] = {name:p.name, emoji:p.emoji, points:0, played:0, strokesSum:0, best:null});
 
   jornadas.forEach(j => {
     const ranked = rankJornada(j);
     ranked.forEach(r => {
-      if(!stats[r.name]) stats[r.name] = {name:r.name, points:0, played:0, strokesSum:0, best:null};
+      if(!stats[r.name]) stats[r.name] = {name:r.name, emoji:getEmoji(r.name), points:0, played:0, strokesSum:0, best:null};
       stats[r.name].points += r.points;
       stats[r.name].played += 1;
       stats[r.name].strokesSum += r.strokes;
@@ -412,7 +449,7 @@ function renderBoard(){
       <div class="board-row">
         <div class="rank-flag ${rankClass}">${idx+1}</div>
         <div class="name-col">
-          <div class="name">${escapeHtml(s.name)}</div>
+          <div class="name">${s.emoji || '⛳'} ${escapeHtml(s.name)}</div>
           <div class="meta">${s.played} jornada${s.played===1?'':'s'} ${s.best!==null ? '· mejor: '+s.best : ''}</div>
         </div>
         <div class="avg">${avg}</div>
@@ -445,7 +482,7 @@ function renderJornadas(){
     ranked.forEach(r => {
       const medal = r.rank===1 ? '🥇' : r.rank===2 ? '🥈' : r.rank===3 ? '🥉' : '';
       html += `<div class="score-line">
-        <span class="who">${medal ? `<span class="medal">${medal}</span>`:''}${escapeHtml(r.name)}</span>
+        <span class="who">${medal ? `<span class="medal">${medal}</span>`:''}${getEmoji(r.name)} ${escapeHtml(r.name)}</span>
         <span class="strokes">${r.strokes} golpes · ${r.points}p</span>
       </div>`;
     });
@@ -458,8 +495,8 @@ function renderNewJornadaForm(){
   const el = document.getElementById('new-players');
   el.innerHTML = participants.map(p => `
     <div class="player-row">
-      <div class="pname">${escapeHtml(p)}</div>
-      <input type="number" min="1" placeholder="golpes" data-player="${escapeAttr(p)}" class="score-input">
+      <div class="pname"><span class="avatar-sm">${p.emoji || '⛳'}</span>${escapeHtml(p.name)}</div>
+      <input type="number" min="1" placeholder="golpes" data-player="${escapeAttr(p.name)}" class="score-input">
     </div>
   `).join('');
   if(!document.getElementById('new-date').value){
@@ -475,10 +512,35 @@ function renderParticipantsList(){
   }
   el.innerHTML = participants.map(p => `
     <div class="participant-chip">
-      <span class="pname-text">${escapeHtml(p)}</span>
-      <button class="rm-chip" onclick="removeParticipant('${escapeAttr(p)}')">eliminar</button>
+      <div class="chip-left">
+        <button class="avatar-btn" onclick="toggleEmojiPicker('${escapeAttr(p.name)}')" title="Cambiar avatar">${p.emoji || '⛳'}</button>
+        <span class="pname-text">${escapeHtml(p.name)}</span>
+      </div>
+      <button class="rm-chip" onclick="removeParticipant('${escapeAttr(p.name)}')">eliminar</button>
     </div>
+    ${editingEmojiFor === p.name ? renderEmojiPicker(p.name) : ''}
   `).join('');
+}
+
+function renderEmojiPicker(name){
+  return `<div class="emoji-picker">${EMOJI_PALETTE.map(e =>
+    `<button class="emoji-opt" onclick="setEmoji('${escapeAttr(name)}','${e}')">${e}</button>`
+  ).join('')}</div>`;
+}
+
+function toggleEmojiPicker(name){
+  editingEmojiFor = (editingEmojiFor === name) ? null : name;
+  renderParticipantsList();
+}
+
+async function setEmoji(name, emoji){
+  editingEmojiFor = null;
+  try{
+    await apiPost('setEmoji', { name, emoji });
+    await loadAll();
+  }catch(e){
+    alert('No se ha podido cambiar el avatar. Inténtalo de nuevo.');
+  }
 }
 
 function renderAll(){
@@ -547,12 +609,12 @@ async function addParticipant(){
   const name = input.value.trim();
   const statusEl = document.getElementById('participant-status');
   if(!name){ return; }
-  if(participants.includes(name)){
+  if(participants.some(p => p.name === name)){
     statusEl.textContent = 'Este jugador ya existe.';
     return;
   }
   try{
-    await apiPost('addParticipant', { name });
+    await apiPost('addParticipant', { name, emoji: '⛳' });
     await loadAll();
     input.value = '';
     statusEl.textContent = '';
