@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liga MiniThor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --turf-dark:#12362a;
+    --turf-mid:#1f5c42;
+    --turf-line:#2d7a57;
+    --cream:#f3ecd9;
+    --cream-dim:#d9cfae;
+    --flag-red:#e0472c;
+    --gold:#e3b23c;
+    --ink:#12241d;
+    --name-brown:#5a3a22;
+    --radius:16px;
+    --font-display:'Baloo 2', sans-serif;
+    --font-body:'Work Sans', sans-serif;
+    --font-mono:'Space Mono', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 8%, rgba(255,255,255,0.05), transparent 40%),
+      repeating-linear-gradient(45deg, var(--turf-dark) 0px, var(--turf-dark) 2px, var(--turf-mid) 2px, var(--turf-mid) 4px);
+    background-color:var(--turf-dark);
+    background-blend-mode:normal;
+    color:var(--cream);
+    font-family:var(--font-body);
+    min-height:100vh;
+    padding:28px 16px 60px;
+  }
+
+  .wrap{max-width:760px;margin:0 auto;}
+
+  /* HERO */
+  .hero{
+    text-align:center;
+    margin-bottom:28px;
+    position:relative;
+  }
+  .flagpole{
+    width:4px;height:54px;background:var(--cream-dim);
+    margin:0 auto;position:relative;
+  }
+  .flag{
+    position:absolute; top:0; left:2px;
+    width:0; height:0;
+    border-top:16px solid transparent;
+    border-bottom:16px solid transparent;
+    border-left:26px solid var(--flag-red);
+    transform-origin:left center;
+    animation:wave 2.6s ease-in-out infinite;
+  }
+  @keyframes wave{
+    0%,100%{transform:skewY(0deg);}
+    50%{transform:skewY(6deg);}
+  }
+  h1{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:clamp(28px,7vw,42px);
+    letter-spacing:0.5px;
+    margin:10px 0 4px;
+    text-transform:uppercase;
+  }
+  .subtitle{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--cream-dim);
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+  }
+
+  /* TABS */
+  .tabs{
+    display:flex;
+    gap:6px;
+    background:rgba(0,0,0,0.2);
+    padding:5px;
+    border-radius:999px;
+    margin-bottom:22px;
+    overflow-x:auto;
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding:10px 8px;
+    border-radius:999px;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    color:var(--cream-dim);
+    white-space:nowrap;
+    transition:background .2s ease, color .2s ease;
+    user-select:none;
+  }
+  .tab.active{background:var(--flag-red);color:#fff;}
+  .tab:not(.active):hover{color:var(--cream);}
+
+  .view{display:none;}
+  .view.active{display:block; animation:fadein .3s ease;}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  /* CARD */
+  .card{
+    background:var(--cream);
+    color:var(--ink);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+    box-shadow:0 6px 0 rgba(0,0,0,0.25);
+  }
+
+  /* LEADERBOARD */
+  .board-row{
+    display:grid;
+    grid-template-columns:34px 1fr auto auto;
+    align-items:center;
+    gap:10px;
+    padding:12px 4px;
+    border-bottom:1px dashed rgba(18,36,29,0.15);
+  }
+  .board-row:last-child{border-bottom:none;}
+  .board-row.head{
+    font-family:var(--font-mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:rgba(18,36,29,0.55);
+    border-bottom:2px solid rgba(18,36,29,0.15);
+  }
+  .rank-flag{
+    width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-weight:700;font-size:13px;
+    background:var(--turf-mid); color:var(--cream);
+  }
+  .rank-flag.p1{background:var(--gold); color:var(--ink);}
+  .rank-flag.p2{background:#c7c7c7; color:var(--ink);}
+  .rank-flag.p3{background:#c98a4b; color:var(--ink);}
+  .name-col .name{font-weight:700; font-size:15px; color:var(--name-brown);}
+  .name-col .meta{font-family:var(--font-mono); font-size:11px; color:rgba(18,36,29,0.55); margin-top:2px;}
+  .pts{
+    font-family:var(--font-mono); font-weight:700; font-size:18px;
+    text-align:right;
+  }
+  .pts-label{font-size:9px; text-transform:uppercase; letter-spacing:1px; display:block; color:rgba(18,36,29,0.5); font-weight:400; text-align:right;}
+  .avg{font-family:var(--font-mono); font-size:13px; text-align:right; color:rgba(18,36,29,0.6); min-width:48px;}
+
+  .empty{
+    text-align:center; padding:30px 10px; color:rgba(18,36,29,0.55);
+    font-family:var(--font-mono); font-size:13px; line-height:1.6;
+  }
+
+  /* JORNADA TICKET */
+  .ticket{
+    background:var(--cream);
+    color:var(--ink);
+    border-radius:12px;
+    margin-bottom:14px;
+    position:relative;
+    box-shadow:0 4px 0 rgba(0,0,0,0.25);
+    overflow:hidden;
+  }
+  .ticket::before{
+    content:"";
+    position:absolute; top:14px; right:-8px;
+    width:16px;height:16px;border-radius:50%;
+    background:var(--turf-dark);
+  }
+  .ticket-head{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 30px 10px 16px;
+    border-bottom:1px dashed rgba(18,36,29,0.2);
+  }
+  .ticket-date{font-family:var(--font-display); font-weight:700; font-size:16px;}
+  .ticket-course{font-family:var(--font-mono); font-size:11px; color:rgba(18,36,29,0.55); margin-top:2px;}
+  .del-btn{
+    background:none; border:none; color:rgba(18,36,29,0.35);
+    font-size:16px; cursor:pointer; padding:4px 8px;
+  }
+  .del-btn:hover{color:var(--flag-red);}
+  .ticket-body{padding:10px 16px 14px;}
+  .score-line{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 0; font-size:14px;
+  }
+  .score-line .who{font-weight:600;}
+  .score-line .strokes{font-family:var(--font-mono); font-weight:700;}
+  .medal{font-size:13px; margin-right:6px;}
+
+  /* FORMS */
+  label{
+    display:block; font-family:var(--font-mono); font-size:11px;
+    text-transform:uppercase; letter-spacing:1px; color:rgba(18,36,29,0.6);
+    margin:14px 0 6px;
+  }
+  label:first-child{margin-top:0;}
+  input[type=text], input[type=date], input[type=number]{
+    width:100%; padding:10px 12px; border-radius:8px;
+    border:2px solid rgba(18,36,29,0.15); background:#fff;
+    font-family:var(--font-body); font-size:15px; color:var(--ink);
+  }
+  input:focus{outline:none; border-color:var(--turf-mid);}
+  .player-row{
+    display:grid; grid-template-columns:1fr 90px; gap:10px; align-items:center; margin-bottom:8px;
+  }
+  .player-row .pname{font-weight:600; font-size:14px;}
+  .hint{font-family:var(--font-mono); font-size:11px; color:rgba(18,36,29,0.45); margin-top:4px;}
+
+  .btn{
+    display:inline-block; width:100%;
+    background:var(--flag-red); color:#fff; border:none;
+    font-family:var(--font-display); font-weight:700; font-size:15px;
+    padding:13px; border-radius:10px; cursor:pointer;
+    margin-top:18px;
+    transition:transform .15s ease;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
+  .btn.secondary{background:var(--turf-mid);}
+  .btn.small{width:auto; padding:9px 16px; font-size:13px; margin-top:0;}
+
+  .add-player-row{display:flex; gap:8px;}
+  .add-player-row input{flex:1;}
+
+  .participant-chip{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 4px; border-bottom:1px dashed rgba(18,36,29,0.15);
+    font-weight:700; font-size:14px;
+  }
+  .participant-chip .pname-text{color:var(--name-brown);}
+  .participant-chip:last-child{border-bottom:none;}
+  .rm-chip{background:none;border:none;color:rgba(18,36,29,0.35);cursor:pointer;font-size:13px;font-family:var(--font-mono);}
+  .rm-chip:hover{color:var(--flag-red);}
+
+  .status-msg{
+    text-align:center; font-family:var(--font-mono); font-size:12px;
+    color:var(--cream-dim); margin-top:10px; min-height:16px;
+  }
+
+  .loading{
+    text-align:center; padding:40px; font-family:var(--font-mono); color:var(--cream-dim); font-size:13px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="flagpole"><div class="flag"></div></div>
+    <h1>Liga MiniThor</h1>
+    <div class="subtitle">Copa Familiar &middot; Temporada 2026</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-view="classificacio">Clasificación</div>
+    <div class="tab" data-view="jornades">Jornadas</div>
+    <div class="tab" data-view="afegir">Añadir</div>
+    <div class="tab" data-view="participants">Jugadores</div>
+  </div>
+
+  <!-- CLASSIFICACIO -->
+  <div class="view active" id="view-classificacio">
+    <div class="card">
+      <div id="board-content" class="loading">Cargando clasificación…</div>
+    </div>
+  </div>
+
+  <!-- JORNADES -->
+  <div class="view" id="view-jornades">
+    <div id="jornades-content" class="loading">Cargando jornadas…</div>
+  </div>
+
+  <!-- AFEGIR -->
+  <div class="view" id="view-afegir">
+    <div class="card">
+      <label>Fecha</label>
+      <input type="date" id="new-date">
+      <label>Campo / lugar (opcional)</label>
+      <input type="text" id="new-course" placeholder="Ex: Minigolf Lloret">
+
+      <label style="margin-top:20px;">Golpes totales de cada jugador</label>
+      <div id="new-players"></div>
+      <div class="hint">Deja en blanco a quien no haya jugado ese día.</div>
+
+      <button class="btn" id="save-jornada">Guardar jornada</button>
+      <div class="status-msg" id="save-status"></div>
+    </div>
+  </div>
+
+  <!-- PARTICIPANTS -->
+  <div class="view" id="view-participants">
+    <div class="card">
+      <div id="participants-list" class="loading">Cargando jugadores…</div>
+      <div class="add-player-row" style="margin-top:16px;">
+        <input type="text" id="new-participant-name" placeholder="Nombre del nuevo jugador">
+        <button class="btn small" id="add-participant-btn">Añadir</button>
+      </div>
+      <div class="status-msg" id="participant-status"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let participants = [];
+let jornadas = [];
+
+// PEGA AQUÍ la URL de tu Apps Script (acaba en /exec)
+const API_URL = "https://script.google.com/macros/s/AKfycbwHfYjzokAM3Fo8dkdb-yCGXTsevvbzqTtWC8IiQF9e0gbf3CxiunVGOpYDCHLbqc3d/exec";
+
+const DEFAULT_PARTICIPANTS = ["Anna","Alba","Albert","Modesto","Lena","Sergi"];
+
+async function apiGet(){
+  const res = await fetch(API_URL);
+  if(!res.ok) throw new Error('API error');
+  return res.json();
+}
+
+async function apiPost(action, payload){
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS con Apps Script
+    body: JSON.stringify(Object.assign({ action }, payload))
+  });
+  if(!res.ok) throw new Error('API error');
+  return res.json();
+}
+
+async function loadAll(){
+  try{
+    const data = await apiGet();
+    participants = data.participants && data.participants.length ? data.participants : DEFAULT_PARTICIPANTS.slice();
+    jornadas = data.jornadas || [];
+  }catch(e){
+    participants = DEFAULT_PARTICIPANTS.slice();
+    jornadas = [];
+    document.getElementById('board-content').innerHTML =
+      '<div class="empty">No se ha podido conectar con la hoja de datos.<br>Revisa que la URL de la API esté bien configurada.</div>';
+  }
+  renderAll();
+}
+
+// ---------- RANKING LOGIC ----------
+function rankJornada(j){
+  const entries = Object.entries(j.scores)
+    .filter(([name, strokes]) => strokes !== null && strokes !== undefined && strokes !== "")
+    .map(([name, strokes]) => ({name, strokes:Number(strokes)}))
+    .sort((a,b)=>a.strokes-b.strokes);
+
+  const n = entries.length;
+  let result = [];
+  let i = 0;
+  while(i < n){
+    let tieCount = 1;
+    while(i+tieCount < n && entries[i+tieCount].strokes === entries[i].strokes) tieCount++;
+    const rank = i+1;
+    const points = n - rank + 1;
+    for(let k=0;k<tieCount;k++){
+      result.push({name:entries[i+k].name, strokes:entries[i].strokes, rank, points});
+    }
+    i += tieCount;
+  }
+  return result;
+}
+
+function computeStandings(){
+  const stats = {};
+  participants.forEach(p => stats[p] = {name:p, points:0, played:0, strokesSum:0, best:null});
+
+  jornadas.forEach(j => {
+    const ranked = rankJornada(j);
+    ranked.forEach(r => {
+      if(!stats[r.name]) stats[r.name] = {name:r.name, points:0, played:0, strokesSum:0, best:null};
+      stats[r.name].points += r.points;
+      stats[r.name].played += 1;
+      stats[r.name].strokesSum += r.strokes;
+      if(stats[r.name].best === null || r.strokes < stats[r.name].best) stats[r.name].best = r.strokes;
+    });
+  });
+
+  return Object.values(stats).sort((a,b)=>{
+    if(b.points !== a.points) return b.points - a.points;
+    const avgA = a.played ? a.strokesSum/a.played : Infinity;
+    const avgB = b.played ? b.strokesSum/b.played : Infinity;
+    return avgA - avgB;
+  });
+}
+
+// ---------- RENDER ----------
+function renderBoard(){
+  const el = document.getElementById('board-content');
+  if(jornadas.length === 0){
+    el.innerHTML = '<div class="empty">Todavía no hay ninguna jornada jugada.<br>Ve a "Añadir" para registrar la primera! ⛳</div>';
+    return;
+  }
+  const standings = computeStandings();
+  let html = '<div class="board-row head"><div></div><div>Jugador</div><div>Media</div><div>Puntos</div></div>';
+  standings.forEach((s, idx) => {
+    const rankClass = idx===0 ? 'p1' : idx===1 ? 'p2' : idx===2 ? 'p3' : '';
+    const avg = s.played ? (s.strokesSum/s.played).toFixed(1) : '—';
+    html += `
+      <div class="board-row">
+        <div class="rank-flag ${rankClass}">${idx+1}</div>
+        <div class="name-col">
+          <div class="name">${escapeHtml(s.name)}</div>
+          <div class="meta">${s.played} jornada${s.played===1?'':'s'} ${s.best!==null ? '· mejor: '+s.best : ''}</div>
+        </div>
+        <div class="avg">${avg}</div>
+        <div class="pts">${s.points}<span class="pts-label">puntos</span></div>
+      </div>`;
+  });
+  el.innerHTML = html;
+}
+
+function renderJornadas(){
+  const el = document.getElementById('jornades-content');
+  if(jornadas.length === 0){
+    el.innerHTML = '<div class="card"><div class="empty">Todavía no hay ninguna jornada registrada.</div></div>';
+    return;
+  }
+  const sorted = [...jornadas].sort((a,b)=> new Date(b.date) - new Date(a.date));
+  let html = '';
+  sorted.forEach(j => {
+    const ranked = rankJornada(j).sort((a,b)=>a.rank-b.rank);
+    const dateFmt = new Date(j.date+'T00:00:00').toLocaleDateString('es-ES', {day:'numeric', month:'short', year:'numeric'});
+    html += `<div class="ticket">
+      <div class="ticket-head">
+        <div>
+          <div class="ticket-date">${dateFmt}</div>
+          ${j.course ? `<div class="ticket-course">${escapeHtml(j.course)}</div>` : ''}
+        </div>
+        <button class="del-btn" onclick="deleteJornada('${j.id}')" title="Eliminar jornada">✕</button>
+      </div>
+      <div class="ticket-body">`;
+    ranked.forEach(r => {
+      const medal = r.rank===1 ? '🥇' : r.rank===2 ? '🥈' : r.rank===3 ? '🥉' : '';
+      html += `<div class="score-line">
+        <span class="who">${medal ? `<span class="medal">${medal}</span>`:''}${escapeHtml(r.name)}</span>
+        <span class="strokes">${r.strokes} golpes · ${r.points}p</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+  el.innerHTML = html;
+}
+
+function renderNewJornadaForm(){
+  const el = document.getElementById('new-players');
+  el.innerHTML = participants.map(p => `
+    <div class="player-row">
+      <div class="pname">${escapeHtml(p)}</div>
+      <input type="number" min="1" placeholder="golpes" data-player="${escapeAttr(p)}" class="score-input">
+    </div>
+  `).join('');
+  if(!document.getElementById('new-date').value){
+    document.getElementById('new-date').value = new Date().toISOString().slice(0,10);
+  }
+}
+
+function renderParticipantsList(){
+  const el = document.getElementById('participants-list');
+  if(participants.length === 0){
+    el.innerHTML = '<div class="empty">Todavía no hay ningún jugador.</div>';
+    return;
+  }
+  el.innerHTML = participants.map(p => `
+    <div class="participant-chip">
+      <span class="pname-text">${escapeHtml(p)}</span>
+      <button class="rm-chip" onclick="removeParticipant('${escapeAttr(p)}')">eliminar</button>
+    </div>
+  `).join('');
+}
+
+function renderAll(){
+  renderBoard();
+  renderJornadas();
+  renderNewJornadaForm();
+  renderParticipantsList();
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escapeAttr(str){ return escapeHtml(str).replace(/'/g,'&#39;'); }
+
+// ---------- ACTIONS ----------
+async function saveNewJornada(){
+  const date = document.getElementById('new-date').value;
+  const course = document.getElementById('new-course').value.trim();
+  const statusEl = document.getElementById('save-status');
+
+  if(!date){
+    statusEl.textContent = 'Hace falta indicar una fecha.';
+    return;
+  }
+
+  const scores = {};
+  let any = false;
+  document.querySelectorAll('.score-input').forEach(inp => {
+    const val = inp.value.trim();
+    if(val !== ''){
+      scores[inp.dataset.player] = Number(val);
+      any = true;
+    }
+  });
+
+  if(!any){
+    statusEl.textContent = "Introduce los golpes de al menos un jugador.";
+    return;
+  }
+
+  statusEl.textContent = 'Guardando…';
+  try{
+    await apiPost('addJornada', { date, course, scores });
+    await loadAll();
+    statusEl.textContent = '¡Jornada guardada! ⛳';
+    document.getElementById('new-course').value = '';
+    document.querySelectorAll('.score-input').forEach(inp => inp.value = '');
+    setTimeout(()=>{ statusEl.textContent=''; }, 2000);
+  }catch(e){
+    statusEl.textContent = 'Error al guardar. Inténtalo de nuevo.';
+  }
+}
+
+async function deleteJornada(id){
+  if(!confirm('¿Seguro que quieres eliminar esta jornada?')) return;
+  try{
+    await apiPost('deleteJornada', { id });
+    await loadAll();
+  }catch(e){
+    alert("No se ha podido eliminar. Inténtalo de nuevo.");
+  }
+}
+
+async function addParticipant(){
+  const input = document.getElementById('new-participant-name');
+  const name = input.value.trim();
+  const statusEl = document.getElementById('participant-status');
+  if(!name){ return; }
+  if(participants.includes(name)){
+    statusEl.textContent = 'Este jugador ya existe.';
+    return;
+  }
+  try{
+    await apiPost('addParticipant', { name });
+    await loadAll();
+    input.value = '';
+    statusEl.textContent = '';
+  }catch(e){
+    statusEl.textContent = 'Error al añadir. Inténtalo de nuevo.';
+  }
+}
+
+async function removeParticipant(name){
+  if(!confirm(`¿Eliminar a ${name} de la lista de jugadores? (Las jornadas ya jugadas no se tocarán)`)) return;
+  try{
+    await apiPost('removeParticipant', { name });
+    await loadAll();
+  }catch(e){
+    alert("No se ha podido eliminar.");
+  }
+}
+
+// ---------- TABS ----------
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-' + tab.dataset.view).classList.add('active');
+  });
+});
+
+document.getElementById('save-jornada').addEventListener('click', saveNewJornada);
+document.getElementById('add-participant-btn').addEventListener('click', addParticipant);
+document.getElementById('new-participant-name').addEventListener('keydown', e => {
+  if(e.key === 'Enter') addParticipant();
+});
+
+loadAll();
+</script>
+</body>
+</html>
